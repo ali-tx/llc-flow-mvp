@@ -22,36 +22,36 @@ LLC-Flow is an AI-driven platform designed to simplify the formation of Limited 
 - NPM or Yarn
 - Anthropic Claude API Key
 
-### Backend Setup (Server)
+### Easy Start (Unified)
+This is the fastest way to run both the frontend and backend together:
+1. Make sure you have installed dependencies in both `/client` and `/server`.
+2. Run the start script from the root:
+   ```bash
+   ./start.sh
+   ```
+   *Press `Ctrl+C` to stop both servers at once.*
+
+### Manual Start (Individual)
+If you prefer to run the services in separate terminals:
+
+#### Backend Setup (Server)
 1. Navigate to the server directory:
    ```bash
    cd server
    ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Create a `.env` file in the `server` directory and add your Claude API Key:
-   ```env
-   CLAUDE_API_KEY=your_api_key_here
-   CLAUDE_MODEL=claude-3-5-sonnet-20240620
-   ```
-4. Start the development server:
+2. Create a `.env` file and add your Claude API Key (see `.env.example`).
+3. Start the development server:
    ```bash
    npm run dev
    ```
    The server will run at `http://localhost:3001`.
 
-### Frontend Setup (Client)
-1. Open a new terminal and navigate to the client directory:
+#### Frontend Setup (Client)
+1. Navigate to the client directory:
    ```bash
    cd client
    ```
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-3. Start the development server:
+2. Start the development server:
    ```bash
    npm run dev
    ```
