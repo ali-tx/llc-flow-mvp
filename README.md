@@ -45,8 +45,12 @@ If you prefer to run the services in separate terminals:
    ```bash
    cd server
    ```
-2. Create a `.env` file and add your Claude API Key (see `.env.example`).
-3. Start the development server:
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env` file and add your Claude API Key (see `.env.example`).
+4. Start the development server:
    ```bash
    npm run dev
    ```
@@ -57,7 +61,11 @@ If you prefer to run the services in separate terminals:
    ```bash
    cd client
    ```
-2. Start the development server:
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Start the development server:
    ```bash
    npm run dev
    ```
