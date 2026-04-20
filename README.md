@@ -24,8 +24,12 @@ LLC-Flow is an AI-driven platform designed to simplify the formation of Limited 
 ## Environment Variables
 The backend requires a `.env` file in the `/server` directory:
 ```env
+# Required: Anthropic API credentials
 CLAUDE_API_KEY=your_api_key_here
 CLAUDE_MODEL=claude-3-5-sonnet-20240620
+
+# Optional: PostgreSQL Database (Defaults to memory storage if empty)
+DATABASE_URL=postgres://user:password@localhost:5432/llcflow
 ```
 
 ### Easy Start (Unified)
