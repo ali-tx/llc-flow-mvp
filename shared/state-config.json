@@ -1,0 +1,45 @@
+{
+  "states": {
+    "DE": {
+      "name": "Delaware",
+      "abbreviation": "DE",
+      "filingFee": 102,
+      "processingDays": 1,
+      "requirements": {
+        "businessNameRequired": true,
+        "registeredAgentRequired": true,
+        "memberListingRequired": false,
+        "publicationRequired": false
+      },
+      "sosLink": "https://corp.delaware.gov/",
+      "formFields": [
+        "businessName",
+        "principalOffice",
+        "memberNames",
+        "memberAddresses",
+        "ownershipPercentages"
+      ]
+    },
+    "CA": {
+      "name": "California",
+      "abbreviation": "CA",
+      "filingFee": 70,
+      "processingDays": 5,
+      "requirements": {
+        "businessNameRequired": true,
+        "registeredAgentRequired": true,
+        "memberListingRequired": true,
+        "publicationRequired": false
+      },
+      "sosLink": "https://www.sos.ca.gov/business-programs/cannabis-info/limited-liability-companies-llc",
+      "formFields": [
+        "businessName",
+        "principalOffice",
+        "memberNames",
+        "memberAddresses",
+        "ownershipPercentages",
+        "managementType"
+      ]
+    }
+  }
+}
