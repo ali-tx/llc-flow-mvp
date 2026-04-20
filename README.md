@@ -18,9 +18,15 @@ LLC-Flow is an AI-driven platform designed to simplify the formation of Limited 
 ## Getting Started
 
 ### Prerequisites
-- Node.js (v18 or higher)
 - NPM or Yarn
 - Anthropic Claude API Key
+
+## Environment Variables
+The backend requires a `.env` file in the `/server` directory:
+```env
+CLAUDE_API_KEY=your_api_key_here
+CLAUDE_MODEL=claude-3-5-sonnet-20240620
+```
 
 ### Easy Start (Unified)
 This is the fastest way to run both the frontend and backend together:
