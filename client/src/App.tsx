@@ -1,38 +1,67 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ChevronRight, Building2, ShieldCheck, Zap, Globe, Download, CheckCircle2, Info } from 'lucide-react';
-import stateConfig from '@shared/state-config.json';
+import {
+  ArrowRight,
+  Building2,
+  ShieldCheck,
+  Zap,
+  FileText,
+  CheckCircle2,
+  RotateCcw,
+  Sparkles,
+} from 'lucide-react';
 import ChatInterface from './components/ChatInterface';
 import VerificationScreen from './components/VerificationScreen';
 import axios from 'axios';
-import { jsPDF } from 'jspdf';
 
 type FlowState = 'landing' | 'chat' | 'verification' | 'success';
 
+const FEATURES = [
+  {
+    icon: <Zap size={20} className="text-violet-500" />,
+    title: 'Conversational Formation',
+    desc: 'Just chat — our AI asks the right questions and handles the paperwork.',
+    bg: 'bg-violet-50',
+  },
+  {
+    icon: <ShieldCheck size={20} className="text-emerald-500" />,
+    title: 'Official State Documents',
+    desc: 'Generates a proper Delaware Certificate of Formation — ready to file.',
+    bg: 'bg-emerald-50',
+  },
+  {
+    icon: <Building2 size={20} className="text-blue-500" />,
+    title: 'Expert Recommendations',
+    desc: 'Get tailored advice on entity type, state, and structure for your situation.',
+    bg: 'bg-blue-50',
+  },
+];
+
 const App = () => {
   const [flow, setFlow] = useState<FlowState>('landing');
-  const [selectedState, setSelectedState] = useState('');
   const [sessionId, setSessionId] = useState('');
   const [initialMessage, setInitialMessage] = useState('');
+  const [initialChips, setInitialChips] = useState<string[]>([]);
   const [formData, setFormData] = useState<any>(null);
   const [isStarting, setIsStarting] = useState(false);
 
   const handleStart = async () => {
-    if (selectedState) {
-      setIsStarting(true);
-      try {
-        const { data } = await axios.post('/api/formations/start', { state: selectedState });
-        setSessionId(data.sessionId);
-        setInitialMessage(data.initialMessage);
-        setFlow('chat');
-      } catch (error) {
-        console.error('Failed to start formation:', error);
-        setSessionId('demo-session');
-        setInitialMessage(`Hi! I'll help you form an LLC in ${selectedState}. Let's start—what's your business name?`);
-        setFlow('chat');
-      } finally {
-        setIsStarting(false);
-      }
+    setIsStarting(true);
+    try {
+      const { data } = await axios.post('/api/formations/start', {});
+      setSessionId(data.sessionId);
+      setInitialMessage(data.message);
+      setInitialChips(data.chips || []);
+      setFlow('chat');
+    } catch (error) {
+      console.error('Failed to start formation:', error);
+      // Fallback — still enter chat with a default message
+      setSessionId('demo-' + Date.now());
+      setInitialMessage("Hi! I'll help you form your LLC. What kind of business are you starting?");
+      setInitialChips(['Software / Tech', 'Consulting', 'E-commerce', 'Freelancing', 'Other']);
+      setFlow('chat');
+    } finally {
+      setIsStarting(false);
     }
   };
 
@@ -41,280 +70,241 @@ const App = () => {
     setFlow('verification');
   };
 
-  const handleDownload = () => {
-    if (formData) {
-      const fileNameRaw = formData.businessName ? formData.businessName.replace(/\s+/g, '_') : 'My_LLC';
-
-      // 1. Download JSON
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(formData, null, 2));
-      const jsonAnchor = document.createElement('a');
-      jsonAnchor.setAttribute("href", dataStr);
-      jsonAnchor.setAttribute("download", `${fileNameRaw}_Filing_Data.json`);
-      document.body.appendChild(jsonAnchor); 
-      jsonAnchor.click();
-      jsonAnchor.remove();
-
-      // 2. Generate and Download Professional PDF
-      const doc = new jsPDF();
-      const margin = 20;
-
-      // Header
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(22);
-      doc.text("ARTICLES OF ORGANIZATION", margin, 30);
-      
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(14);
-      doc.text(`Jurisdiction: State of ${formData.state || selectedState || 'N/A'}`, margin, 45);
-      
-      // Section 1
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(12);
-      doc.text("1. Name of Limited Liability Company", margin, 65);
-      doc.setFont("helvetica", "normal");
-      doc.text(`   ${formData.businessName || 'N/A'}`, margin, 75);
-      
-      // Section 2
-      doc.setFont("helvetica", "bold");
-      doc.text("2. Business Addresses", margin, 95);
-      doc.setFont("helvetica", "normal");
-      doc.text(`   Principal Office: ${formData.principalOfficeAddress || 'N/A'}`, margin, 105);
-      
-      // Section 3
-      doc.setFont("helvetica", "bold");
-      doc.text("3. Agent for Service of Process", margin, 125);
-      doc.setFont("helvetica", "normal");
-      doc.text(`   Name: ${formData.registeredAgentName || 'N/A'}`, margin, 135);
-      doc.text(`   Address: ${formData.registeredAgentAddress || 'N/A'}`, margin, 145);
-      
-      // Section 4
-      doc.setFont("helvetica", "bold");
-      doc.text("4. Management / Member Structure", margin, 165);
-      doc.setFont("helvetica", "normal");
-      let currentY = 175;
-      if (formData.members && Array.isArray(formData.members)) {
-        formData.members.forEach((m: any) => {
-          doc.text(`   - ${m.name} (${m.ownershipPercentage || 100}% Equity)`, margin, currentY);
-          currentY += 10;
-        });
-      } else {
-        doc.text(`   - Sole Member structure authorized.`, margin, currentY);
-        currentY += 10;
-      }
-
-      // Section 5: Filing Preference
-      currentY += 10;
-      doc.setFont("helvetica", "bold");
-      doc.text("5. Filing Preferences & Contact", margin, currentY);
-      currentY += 10;
-      doc.setFont("helvetica", "normal");
-      
-      const prefText = formData.filingPreference === 'agency' 
-        ? "Platform Agency Filing Authorized" 
-        : "Manual Filing Selected by Owner";
-      doc.text(`   Execution Method: ${prefText}`, margin, currentY);
-      currentY += 10;
-
-      if (formData.filingPreference === 'agency' && formData.clientEmail) {
-        doc.text(`   Authorizing Contact Email: ${formData.clientEmail}`, margin, currentY);
-      }
-      
-      // Footer
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(10);
-      doc.text("Securely generated by LLC-Flow Platform for official state filing preparation.", margin, 280);
-      
-      // Trigger PDF Browser Download
-      doc.save(`${fileNameRaw}_Articles.pdf`);
-    }
-    
-    setFlow('success');
+  const handleReset = () => {
+    setFlow('landing');
+    setSessionId('');
+    setInitialMessage('');
+    setInitialChips([]);
+    setFormData(null);
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <div className="min-h-screen bg-slate-50 text-slate-900 selection:bg-indigo-100">
+      {/* Gradient blob backgrounds */}
+      <div
+        className="pointer-events-none fixed inset-0 -z-10 overflow-hidden"
+        aria-hidden
+      >
+        <div className="absolute -top-40 -left-40 w-[600px] h-[600px] rounded-full bg-indigo-100 opacity-50 blur-3xl" />
+        <div className="absolute top-1/2 -right-40 w-[500px] h-[500px] rounded-full bg-violet-100 opacity-40 blur-3xl" />
+      </div>
+
       <AnimatePresence mode="wait">
+        {/* ── LANDING ── */}
         {flow === 'landing' && (
           <motion.div
             key="landing"
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="container max-w-6xl mx-auto px-4 py-20 flex flex-col items-center text-center space-y-12"
+            exit={{ opacity: 0, y: -16 }}
+            className="container max-w-5xl mx-auto px-4 py-20 flex flex-col items-center text-center space-y-14"
           >
-            {/* Hero Section */}
-            <div className="space-y-6 max-w-3xl">
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.2 }}
-                className="inline-flex items-center space-x-2 px-4 py-2 rounded-full bg-primary/10 text-primary text-sm font-medium border border-primary/20 mb-4"
-              >
-                <Zap size={16} />
-                <span>AI-Powered Business Formation</span>
-              </motion.div>
-              
-              <h1 className="text-5xl md:text-7xl font-bold tracking-tight text-slate-900 leading-tight">
-                LLC-Flow: Form Your <span className="text-primary italic">Dream</span> LLC in Minutes.
+            {/* Badge */}
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.1 }}
+              className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-indigo-100 text-indigo-700 text-xs font-semibold shadow-sm"
+            >
+              <Sparkles size={13} />
+              AI-Powered LLC Formation
+            </motion.div>
+
+            {/* Hero */}
+            <div className="space-y-5 max-w-3xl">
+              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight leading-tight text-slate-900">
+                Form Your LLC in{' '}
+                <span className="bg-gradient-to-r from-indigo-600 to-violet-600 bg-clip-text text-transparent">
+                  Minutes
+                </span>
+                , Not Days.
               </h1>
-              
-              <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-                No legal jargon, no complex forms. Just a quick chat with our AI agent to generate your professional Articles of Organization.
+              <p className="text-lg text-slate-500 max-w-xl mx-auto leading-relaxed">
+                Just answer a few questions and our AI advisor walks you through every step —
+                recommending the right structure, collecting your details, and generating your
+                official Certificate of Formation.
               </p>
             </div>
 
-            {/* State Selection Card */}
+            {/* CTA */}
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              className="w-full max-w-md p-8 rounded-2xl glass shadow-2xl border border-white/20 space-y-6"
+              transition={{ delay: 0.3 }}
+              className="flex flex-col items-center gap-3"
             >
-              <div className="text-left space-y-2">
-                <label className="text-sm font-semibold text-slate-600 ml-1">Select Your State</label>
-                <select
-                  value={selectedState}
-                  onChange={(e) => setSelectedState(e.target.value)}
-                  className="w-full h-14 px-4 rounded-xl border border-slate-200 bg-white/50 focus:ring-2 focus:ring-primary focus:border-transparent transition-all outline-none appearance-none cursor-pointer"
-                >
-                  <option value="" disabled>Choose a state...</option>
-                  {Object.entries(stateConfig.states).map(([code, state]) => (
-                    <option key={code} value={code}>
-                      {state.name} ({code})
-                    </option>
-                  ))}
-                </select>
-              </div>
-
               <button
                 onClick={handleStart}
-                disabled={!selectedState || isStarting}
-                className={`w-full h-14 rounded-xl font-bold flex items-center justify-center space-x-2 transition-all shadow-lg ${
-                  selectedState && !isStarting
-                    ? 'bg-primary text-white hover:bg-primary/90 hover:scale-[1.02] active:scale-[0.98]'
-                    : 'bg-slate-200 text-slate-400 cursor-not-allowed'
-                }`}
+                disabled={isStarting}
+                className="group relative h-14 px-10 rounded-2xl font-bold text-base bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-xl hover:shadow-indigo-200 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-70 flex items-center gap-3"
               >
                 {isStarting ? (
-                  <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  <div className="w-5 h-5 rounded-full border-2 border-white/30 border-t-white animate-spin" />
                 ) : (
-                  <>
-                    <span>Start Your Formation</span>
-                    <ChevronRight size={20} />
-                  </>
+                  <Sparkles size={18} />
+                )}
+                {isStarting ? 'Setting up your session…' : 'Start My LLC Formation'}
+                {!isStarting && (
+                  <ArrowRight
+                    size={18}
+                    className="group-hover:translate-x-1 transition-transform"
+                  />
                 )}
               </button>
-              
-              <p className="text-xs text-muted-foreground">
-                Currently supporting Delaware and California. More states coming soon.
+              <p className="text-xs text-slate-400">
+                Takes 5–10 minutes · No account required · Delaware &amp; Wyoming supported
               </p>
             </motion.div>
 
-            {/* Features Grid */}
-            <div className="grid md:grid-cols-3 gap-8 w-full py-12">
+            {/* Steps Preview */}
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.45 }}
+              className="flex flex-wrap justify-center gap-2 text-xs text-slate-500"
+            >
               {[
-                {
-                  icon: <Building2 className="text-blue-500" />,
-                  title: "Direct Data Collection",
-                  desc: "We collect exactly what your state requires, nothing more."
-                },
-                {
-                  icon: <ShieldCheck className="text-emerald-500" />,
-                  title: "Verified Templates",
-                  desc: "Generated documents follow official Secretary of State formats."
-                },
-                {
-                  icon: <Globe className="text-purple-500" />,
-                  title: "Manual Filing Instructions",
-                  desc: "Step-by-step guidance on how to submit your documents."
-                }
-              ].map((feature, i) => (
-                <div key={i} className="p-6 rounded-2xl bg-white border border-slate-100 shadow-sm hover:shadow-md transition-shadow text-left space-y-4">
-                  <div className="w-12 h-12 rounded-xl bg-slate-50 flex items-center justify-center">
-                    {feature.icon}
+                'Business type',
+                'Entity recommendation',
+                'State & name',
+                'Address',
+                'Registered agent',
+                'Ownership',
+                'Sign & generate PDF',
+              ].map((step, i) => (
+                <span
+                  key={i}
+                  className="flex items-center gap-1.5 bg-white border border-slate-100 rounded-full px-3 py-1 shadow-sm"
+                >
+                  <span className="w-4 h-4 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold text-[10px]">
+                    {i + 1}
+                  </span>
+                  {step}
+                </span>
+              ))}
+            </motion.div>
+
+            {/* Features */}
+            <div className="grid md:grid-cols-3 gap-6 w-full">
+              {FEATURES.map((f, i) => (
+                <motion.div
+                  key={i}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.5 + i * 0.1 }}
+                  className="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 text-left space-y-3 hover:shadow-md transition-shadow"
+                >
+                  <div
+                    className={`w-10 h-10 rounded-xl ${f.bg} flex items-center justify-center`}
+                  >
+                    {f.icon}
                   </div>
-                  <h3 className="font-bold text-lg text-slate-800">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm leading-relaxed">{feature.desc}</p>
-                </div>
+                  <h3 className="font-bold text-slate-800">{f.title}</h3>
+                  <p className="text-sm text-slate-500 leading-relaxed">{f.desc}</p>
+                </motion.div>
               ))}
             </div>
           </motion.div>
         )}
 
+        {/* ── CHAT ── */}
         {flow === 'chat' && (
           <motion.div
             key="chat"
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="h-screen flex items-center justify-center p-4 bg-slate-50"
+            exit={{ opacity: 0, x: -24 }}
+            className="h-screen flex flex-col"
           >
-            <ChatInterface 
-              sessionId={sessionId} 
-              initialMessage={initialMessage} 
-              onFinished={handleChatFinished} 
+            {/* Topbar */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-white/80 backdrop-blur-md">
+              <div className="flex items-center gap-2">
+                <Sparkles size={16} className="text-indigo-600" />
+                <span className="font-bold text-slate-800 text-sm">LLC Formation</span>
+              </div>
+              <button
+                onClick={handleReset}
+                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+              >
+                <RotateCcw size={13} />
+                Start over
+              </button>
+            </div>
+
+            {/* Chat fills remaining height */}
+            <div className="flex-1 overflow-hidden p-4 md:p-6 flex items-stretch justify-center">
+              <ChatInterface
+                sessionId={sessionId}
+                initialMessage={initialMessage}
+                initialChips={initialChips}
+                onFinished={handleChatFinished}
+              />
+            </div>
+          </motion.div>
+        )}
+
+        {/* ── VERIFICATION ── */}
+        {flow === 'verification' && formData && (
+          <motion.div
+            key="verification"
+            initial={{ opacity: 0, x: 24 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -24 }}
+          >
+            {/* Topbar */}
+            <div className="flex items-center justify-between px-6 py-3 border-b border-slate-100 bg-white/80 backdrop-blur-md sticky top-0 z-10">
+              <div className="flex items-center gap-2">
+                <FileText size={16} className="text-indigo-600" />
+                <span className="font-bold text-slate-800 text-sm">Review & Download</span>
+              </div>
+              <button
+                onClick={handleReset}
+                className="text-xs text-slate-400 hover:text-slate-600 flex items-center gap-1 transition-colors"
+              >
+                <RotateCcw size={13} />
+                Start over
+              </button>
+            </div>
+
+            <VerificationScreen
+              formData={formData}
+              sessionId={sessionId}
+              onEdit={() => setFlow('chat')}
             />
           </motion.div>
         )}
 
-        {flow === 'verification' && (
-          <VerificationScreen 
-            formData={formData} 
-            onEdit={() => setFlow('chat')} 
-            onDownload={handleDownload} 
-          />
-        )}
-
+        {/* ── SUCCESS ── */}
         {flow === 'success' && (
           <motion.div
             key="success"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.92 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="container max-w-2xl mx-auto px-4 py-20 text-center space-y-8"
+            className="container max-w-2xl mx-auto px-4 py-24 text-center space-y-8"
           >
-            <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-6">
-              <CheckCircle2 size={40} />
+            <div className="w-20 h-20 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center mx-auto">
+              <CheckCircle2 size={44} />
             </div>
-            <h2 className="text-4xl font-bold">Formation Ready!</h2>
-            <p className="text-xl text-muted-foreground">
-              Your LLC formation pack is ready. Check your downloads for the PDF and instruction guide.
+            <h2 className="text-4xl font-extrabold">Formation Pack Downloaded!</h2>
+            <p className="text-slate-500 text-lg">
+              Your Certificate of Formation is ready. Submit it to the Delaware Division of Corporations to officially form your LLC.
             </p>
-            
-            <div className="bg-white p-8 rounded-2xl border border-slate-100 text-left space-y-6 shadow-xl">
-              <h3 className="font-bold text-xl flex items-center space-x-2">
-                <Info className="text-primary" />
-                <span>Next Steps (Manual Filing)</span>
-              </h3>
-              <ol className="space-y-4 text-slate-700">
-                <li className="flex space-x-3">
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex-shrink-0 flex items-center justify-center font-bold text-sm">1</span>
-                  <span>Visit the <strong>{stateConfig.states[selectedState as keyof typeof stateConfig.states].name} Secretary of State</strong> website.</span>
-                </li>
-                <li className="flex space-x-3">
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex-shrink-0 flex items-center justify-center font-bold text-sm">2</span>
-                  <span>Upload your generated <strong>Articles of Organization</strong> PDF.</span>
-                </li>
-                <li className="flex space-x-3">
-                  <span className="w-6 h-6 rounded-full bg-primary/10 text-primary flex-shrink-0 flex items-center justify-center font-bold text-sm">3</span>
-                  <span>Pay the <strong>${stateConfig.states[selectedState as keyof typeof stateConfig.states].filingFee}</strong> filing fee.</span>
-                </li>
-              </ol>
-            </div>
-
             <button
-              onClick={() => setFlow('landing')}
-              className="px-8 h-14 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all"
+              onClick={handleReset}
+              className="h-12 px-8 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all"
             >
-              Start Another LLC
+              Form Another LLC
             </button>
           </motion.div>
         )}
       </AnimatePresence>
 
       {/* Footer */}
-      <footer className="py-12 border-t border-slate-100 text-center text-sm text-muted-foreground">
-        <p>&copy; 2026 LLC-Flow. Not a law firm. No legal advice provided.</p>
-      </footer>
+      {flow === 'landing' && (
+        <footer className="py-8 text-center text-xs text-slate-400 border-t border-slate-100">
+          © 2026 LLC-Flow · Not a law firm · No legal advice provided
+        </footer>
+      )}
     </div>
   );
 };

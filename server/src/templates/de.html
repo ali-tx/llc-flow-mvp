@@ -1,44 +1,148 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+<meta charset="UTF-8" />
 <style>
-  body { font-family: 'Times New Roman', serif; padding: 40px; line-height: 1.6; }
-  h1 { text-align: center; text-transform: uppercase; font-size: 24px; margin-bottom: 40px; }
-  .section { margin-bottom: 25px; }
-  .label { font-weight: bold; display: block; margin-bottom: 5px; }
-  .officer-seal { float: right; border: 1px solid #000; padding: 10px; width: 150px; text-align: center; margin-top: 50px; }
-  .footer { margin-top: 100px; border-top: 1px solid #000; padding-top: 20px; font-size: 12px; }
+  @import url('https://fonts.googleapis.com/css2?family=Times+New+Roman&display=swap');
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Times New Roman', Times, serif;
+    font-size: 11pt;
+    color: #000;
+    background: #fff;
+    padding: 1in;
+    line-height: 1.6;
+    width: 8.5in;
+    min-height: 11in;
+  }
+
+  /* ── Header ── */
+  .header {
+    text-align: center;
+    margin-bottom: 40px;
+  }
+  .header h1 {
+    font-size: 14pt;
+    font-weight: bold;
+    text-transform: uppercase;
+    line-height: 1.4;
+  }
+
+  /* ── Preamble ── */
+  .preamble {
+    margin-bottom: 30px;
+    text-align: justify;
+  }
+
+  /* ── Numbered Sections ── */
+  .section {
+    margin-bottom: 35px;
+    position: relative;
+    padding-left: 30px;
+  }
+  .section-number {
+    position: absolute;
+    left: 0;
+    top: 0;
+    font-weight: bold;
+  }
+  .section-body {
+    text-align: justify;
+  }
+  .inline-value {
+    font-weight: bold;
+    text-decoration: underline;
+    padding: 0 4px;
+  }
+
+  /* ── Signature Area ── */
+  .signature-area {
+    margin-top: 80px;
+    margin-left: auto;
+    width: 350px;
+  }
+  .sig-block {
+    margin-bottom: 30px;
+  }
+  .sig-line {
+    border-bottom: 1px solid #000;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .sig-label {
+    text-align: right;
+    font-size: 10pt;
+  }
+  .sig-value {
+    font-weight: bold;
+  }
+
+  /* Print */
+  @media print {
+    body { padding: 0.75in 1in; }
+  }
 </style>
 </head>
 <body>
-  <h1>State of Delaware<br>Certificate of Formation<br>Limited Liability Company</h1>
 
+  <!-- Header -->
+  <div class="header">
+    <h1>
+      STATE OF DELAWARE<br>
+      CERTIFICATE OF FORMATION<br>
+      OF LIMITED LIABILITY COMPANY
+    </h1>
+  </div>
+
+  <!-- Preamble -->
+  <div class="preamble">
+    The undersigned authorized person, desiring to form a limited liability company pursuant
+    to the Limited Liability Company Act of the State of Delaware, hereby certifies as
+    follows:
+  </div>
+
+  <!-- Section 1: Company Name -->
   <div class="section">
-    <p>The undersigned, desiring to form a Limited Liability Company under the Limited Liability Company Act of the State of Delaware, hereby certifies that:</p>
+    <div class="section-number">1.</div>
+    <div class="section-body">
+      The name of the limited liability company is <span class="inline-value">{{businessName}}</span>.
+    </div>
   </div>
 
+  <!-- Section 2: Registered Agent -->
   <div class="section">
-    <span class="label">First: The name of the Limited Liability Company is:</span>
-    <p><strong>{{businessName}}</strong></p>
+    <div class="section-number">2.</div>
+    <div class="section-body">
+      The Registered Office of the limited liability company in the State of Delaware is
+      located at <span class="inline-value">{{registeredAgentAddress}}</span> (street),
+      in the City of <span class="inline-value">Dover</span>, Zip Code <span class="inline-value">19901</span>. 
+      The name of the Registered Agent at such address upon whom process against this limited
+      liability company may be served is <span class="inline-value">{{registeredAgentName}}</span>.
+    </div>
   </div>
 
-  <div class="section">
-    <span class="label">Second: The address of its registered office in the State of Delaware is:</span>
-    <p>{{registeredAgentAddress}}</p>
-    <p>The name of its Registered Agent at such address is: <strong>{{registeredAgentName}}</strong></p>
+  <!-- Signature Area -->
+  <div class="signature-area">
+    <div class="sig-block">
+      <div class="sig-line">
+        <span>By:</span>
+        <span class="sig-value">/s/ {{authorizedSignerName}}</span>
+      </div>
+      <div class="sig-label">Authorized Person</div>
+    </div>
+
+    <div class="sig-block">
+      <div class="sig-line">
+        <span>Name:</span>
+        <span class="sig-value">{{authorizedSignerName}}</span>
+      </div>
+      <div class="sig-label">Print or Type</div>
+    </div>
   </div>
 
-  <div class="section">
-    <p>IN WITNESS WHEREOF, the undersigned has executed this Certificate of Formation this {{formationDate}}.</p>
-  </div>
-
-  <div class="section" style="margin-top: 60px;">
-    <p>__________________________________________</p>
-    <p>Authorized Person: {{organizerName}}</p>
-  </div>
-
-  <div class="footer">
-    <p>This document is generated by LLC-Flow. This is a draft for filing purposes only.</p>
-  </div>
 </body>
 </html>
